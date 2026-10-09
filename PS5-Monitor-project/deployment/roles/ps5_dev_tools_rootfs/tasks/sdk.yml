@@ -1,0 +1,65 @@
+---
+- name: Read installed PS5 Payload SDK version marker
+  slurp:
+    src: "{{ ps5_dev_tools_rootfs }}{{ ps5_payload_sdk_install_dir }}/.ps5-dev-tools-version"
+  register: ps5_sdk_marker
+  failed_when: false
+
+- name: Determine whether PS5 Payload SDK installation is required
+  set_fact:
+    ps5_sdk_install_required: >-
+      {{
+        ps5_sdk_marker.content is not defined
+        or (ps5_sdk_marker.content | b64decode | trim) != ps5_payload_sdk_version
+      }}
+
+- name: Remove old PS5 Payload SDK when selected version changes
+  file:
+    path: "{{ ps5_dev_tools_rootfs }}{{ ps5_payload_sdk_install_dir }}"
+    state: absent
+  when: ps5_sdk_install_required | bool
+
+- name: Download selected PS5 Payload SDK inside rootfs
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - wget
+      - -q
+      - "{{ ps5_payload_sdk_archive_url }}"
+      - -O
+      - /tmp/ps5-payload-sdk.zip
+  when: ps5_sdk_install_required | bool
+
+- name: Install selected PS5 Payload SDK inside rootfs
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - unzip
+      - -q
+      - -o
+      - /tmp/ps5-payload-sdk.zip
+      - -d
+      - /opt
+  when: ps5_sdk_install_required | bool
+
+- name: Validate PS5 Payload SDK installation directory exists
+  stat:
+    path: "{{ ps5_dev_tools_rootfs }}{{ ps5_payload_sdk_install_dir }}"
+  register: ps5_sdk_dir
+
+- name: Validate PS5 Payload SDK was installed
+  assert:
+    that:
+      - ps5_sdk_dir.stat.exists | bool
+      - ps5_sdk_dir.stat.isdir | bool
+    fail_msg: >-
+      PS5 Payload SDK installation failed. Expected directory:
+      {{ ps5_payload_sdk_install_dir }}
+
+- name: Write selected PS5 Payload SDK version marker
+  copy:
+    dest: "{{ ps5_dev_tools_rootfs }}{{ ps5_payload_sdk_install_dir }}/.ps5-dev-tools-version"
+    content: "{{ ps5_payload_sdk_version }}\n"
+    mode: "0644"

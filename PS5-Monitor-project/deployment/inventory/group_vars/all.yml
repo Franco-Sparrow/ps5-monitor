@@ -1,0 +1,52 @@
+---
+# =============================================================================
+# PS5 DEV TOOLS BUILD ENVIRONMENT
+# =============================================================================
+
+ps5_dev_tools_parent_dir: "/var/lib/ps5-dev-build"
+
+ps5_dev_tools_rootfs: "{{ ps5_dev_tools_parent_dir }}/ps5-dev-tools"
+ps5_dev_tools_workspace_dir: "{{ ps5_dev_tools_parent_dir }}/ps5-dev-tools-workspace"
+ps5_dev_tools_artifacts_dir: "{{ ps5_dev_tools_parent_dir }}/ps5-dev-tools-artifacts"
+
+# false = reuse/repair existing rootfs
+# true  = recreate only the PS5 rootfs
+ps5_dev_tools_recreate_rootfs: false
+
+# =============================================================================
+# ROOTFS OPERATING SYSTEM
+# =============================================================================
+
+ps5_dev_tools_os_distribution: "ubuntu"
+ps5_dev_tools_os_version: "24.04"
+ps5_dev_tools_os_codename: "noble"
+ps5_dev_tools_architecture: "amd64"
+ps5_dev_tools_ubuntu_mirror: "http://archive.ubuntu.com/ubuntu"
+
+# =============================================================================
+# PS5 PAYLOAD SDK
+# =============================================================================
+
+ps5_payload_sdk_version: "0.43"
+ps5_payload_sdk_install_dir: "/opt/ps5-payload-sdk"
+
+ps5_payload_sdk_archive_url: >-
+  https://github.com/ps5-payload-dev/sdk/releases/download/v{{ ps5_payload_sdk_version }}/ps5-payload-sdk.zip
+
+# =============================================================================
+# PS5 MONITOR
+# =============================================================================
+
+ps5_product_name: "ps5-monitor"
+ps5_product_version: "1.4.4"
+
+ps5_product_workspace: "/workspace/{{ ps5_product_name }}"
+
+ps5_product_artifact_name: >-
+  {{ ps5_product_name }}-v{{ ps5_product_version }}.elf
+
+ps5_product_checksum_name: >-
+  {{ ps5_product_artifact_name }}.sha256
+
+# Finished release files are retained only in public/ at project root.
+ps5_public_dir: "{{ playbook_dir }}/../public"

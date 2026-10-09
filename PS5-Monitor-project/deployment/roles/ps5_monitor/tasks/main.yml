@@ -1,0 +1,12 @@
+---
+- name: Validate PS5 Monitor build environment
+  include_tasks: validate.yml
+
+- name: Install PS5 Monitor cross-compiled dependencies
+  include_tasks: dependencies.yml
+
+- name: Install PS5 Monitor fork sources
+  include_tasks: source.yml
+
+- name: Build and publish PS5 Monitor
+  include_tasks: build.yml

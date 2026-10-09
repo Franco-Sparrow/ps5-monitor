@@ -1,0 +1,29 @@
+---
+ps5_monitor_name: "ps5-monitor"
+ps5_monitor_version: "1.4.4"
+
+ps5_monitor_host_workspace: >-
+  {{ ps5_dev_tools_workspace_dir }}/{{ ps5_monitor_name }}
+
+ps5_monitor_chroot_workspace: >-
+  /workspace/{{ ps5_monitor_name }}
+
+# This project bundle keeps the monitor source beside deployment/.
+ps5_monitor_source_dir: >-
+  {{ playbook_dir }}/../../PS5-Monitor/payload
+
+ps5_monitor_build_output: "ps5-monitor.elf"
+ps5_monitor_artifact_name: >-
+  {{ ps5_monitor_name }}-v{{ ps5_monitor_version }}.elf
+ps5_monitor_checksum_name: >-
+  {{ ps5_monitor_artifact_name }}.sha256
+
+ps5_monitor_web_port: 9843
+
+# Cross-compiled PS5 homebrew libraries. The inherited monitoring core requires SQLite,
+# which is shipped by ps5-payload-dev/pacbrew-repo rather than the base SDK.
+ps5_monitor_pacbrew_version: "0.40.2"
+ps5_monitor_pacbrew_archive_url: >-
+  https://github.com/ps5-payload-dev/pacbrew-repo/releases/download/v{{ ps5_monitor_pacbrew_version }}/ps5-payload-dev.tar.gz
+ps5_monitor_hbroot_host: >-
+  {{ ps5_dev_tools_rootfs }}{{ ps5_payload_sdk_install_dir }}/target/user/homebrew

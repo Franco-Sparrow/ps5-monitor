@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#17191d">
+  <title>PS5 Monitor</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="/favicon.png" alt="PS5 Monitor" class="brand-logo">
+        <div class="brand-text">
+          <strong>PS5 Monitor</strong>
+          <small>Hardware Monitor</small>
+        </div>
+      </div>
+
+      <div class="connection-card">
+        <span id="liveDot" class="dot offline"></span>
+        <div><strong id="live">CONNECTING</strong><small id="lastUpdate">Waiting for PS5…</small></div>
+      </div>
+
+      <nav id="nav">
+        <button class="nav-item active" data-view="dashboard">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="system">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span>
+          <span class="nav-label">System Info</span>
+        </button>
+        <button class="nav-item" data-view="cpu">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3M10 10h4v4h-4z"/></svg></span>
+          <span class="nav-label">CPU &amp; Memory</span>
+        </button>
+        <button class="nav-item" data-view="network">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12a10 10 0 0 1 14 0M8 15a6 6 0 0 1 8 0M11 18a2 2 0 0 1 2 0"/><circle cx="12" cy="20" r="1"/></svg></span>
+          <span class="nav-label">Network</span>
+        </button>
+        <button class="nav-item" data-view="storage">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span>
+          <span class="nav-label">Storage</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-note">
+        <strong>Developed by Sparrow</strong><br>
+        Powered by AI
+      </div>
+    </aside>
+
+    <div class="content-shell">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">Live PS5 hardware and game telemetry</p>
+        </div>
+        <div class="server-pill">
+          <span id="serverName">PS5 Monitor</span>
+          <b id="version">—</b>
+        </div>
+      </header>
+
+      <main>
+        <div id="apiError" class="api-error hidden"></div>
+
+        <section class="view active" id="view-dashboard">
+          <section class="card">
+            <div class="section-title">
+              <h2>System Information</h2>
+              <span id="foregroundBadge" class="badge">—</span>
+            </div>
+            <div class="metric-grid five">
+              <div class="metric"><span>Model</span><strong id="model">—</strong></div>
+              <div class="metric"><span>Firmware</span><strong id="firmware">—</strong></div>
+              <div class="metric"><span>CPU Cores</span><strong id="cpuCores">—</strong></div>
+              <div class="metric"><span>Total RAM</span><strong id="totalRam">—</strong></div>
+              <div class="metric"><span>Uptime</span><strong id="uptime">—</strong></div>
+            </div>
+          </section>
+
+          <section class="card game-card">
+            <div class="section-title">
+              <h2>Game Performance</h2>
+              <span id="gameStatus" class="muted">Waiting for game</span>
+            </div>
+            <div class="game-metrics">
+              <div class="metric game-context"><span>Context</span><strong id="gameContext">—</strong></div>
+              <div class="metric game-title"><span>Title ID</span><strong id="gameTitle">—</strong></div>
+              <div class="metric accent game-fps"><span>FPS</span><strong id="fps">—</strong></div>
+              <div class="metric accent game-cpu"><span>CPU Average</span><strong id="cpuAverage">—</strong></div>
+              <div class="metric accent game-memory"><span>RAM Used</span><strong id="ramUsed">—</strong><small id="ramUsedPct" class="metric-sub"></small></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Live Sensors</h2>
+            <div class="metric-grid six">
+              <div class="metric"><span>CPU Temp</span><strong id="cpuTemp">—</strong></div>
+              <div class="metric"><span>SoC Temp</span><strong id="socTemp">—</strong></div>
+              <div class="metric"><span>CPU Clock</span><strong id="cpuClock">—</strong></div>
+              <div class="metric accent"><span>GPU Clock</span><strong id="gpuClock">—</strong></div>
+              <div class="metric accent"><span>Fan Duty</span><strong id="fanDuty">—</strong></div>
+              <div class="metric"><span>Power</span><strong id="power">—</strong></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="view-system">
+          <section class="card"><h2>Hardware</h2><div id="hardwareTable" class="kv-table"></div></section>
+          <section class="card"><h2>Extended Information</h2><div id="extendedTable" class="kv-table"></div></section>
+        </section>
+
+        <section class="view" id="view-cpu">
+          <section class="card">
+            <div class="section-title"><h2>CPU Usage per Core</h2><span class="cpu-average">Average <b id="cpuAverageFull">—</b></span></div>
+            <div id="cpuBarsFull" class="cpu-grid"></div>
+          </section>
+          <section class="card">
+            <h2>Memory</h2>
+            <div id="memoryVisual" class="memory-visual"></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-network">
+          <section class="card">
+            <div class="section-title"><h2>Network</h2><span class="muted">Active connection settings</span></div>
+            <div id="networkTable" class="kv-table"></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-storage">
+          <section class="card"><h2>Console Storage</h2><div id="storageConsole" class="storage-volume"></div></section>
+          <section class="card"><div class="section-title"><h2>M.2 SSD Storage</h2><span class="muted">/mnt/ext1</span></div><div id="storageM2" class="storage-volume"></div></section>
+          <section class="card"><div class="section-title"><h2>USB Extended Storage</h2><span class="muted">/mnt/ext0</span></div><div id="storageUsb" class="storage-volume"></div></section>
+        </section>
+      </main>
+
+      <footer>PS5 Monitor · Developed by Sparrow · Powered by AI</footer>
+    </div>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+
+  var subtitles = {
+    dashboard:'Live PS5 hardware and game telemetry',
+    system:'Hardware and firmware information',
+    cpu:'CPU utilization and system memory',
+    network:'Active network configuration',
+    storage:'Console, M.2 SSD and USB storage information'
+  };
+  var currentView = 'dashboard';
+  var cpuBusy = false, perfBusy = false, netBusy = false;
+
+  function el(id) { return document.getElementById(id); }
+  function setValue(id, value) {
+    var e = el(id);
+    if (!e) return;
+    if (value === undefined || value === null || value === '') value = '—';
+    e.textContent = String(value);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+  function parseKV(text) {
+    var out = {}, lines = String(text || '').split(/\r?\n/), i, pos, k, v;
+    for (i = 0; i < lines.length; i++) {
+      pos = lines[i].indexOf('=');
+      if (pos <= 0) continue;
+      k = lines[i].slice(0, pos).trim();
+      v = lines[i].slice(pos + 1).trim();
+      if (k.indexOf('dbg_') === 0) continue;
+      out[k] = v;
+    }
+    return out;
+  }
+  function humanBytes(value) {
+    var n = Number(value), gb, mb, kb;
+    if (!isFinite(n) || n < 0) return '—';
+    if (n === 0) return '0 B';
+    gb = n / 1073741824;
+    if (gb >= 1) return gb.toFixed(gb >= 10 ? 1 : 2) + ' GB';
+    mb = n / 1048576;
+    if (mb >= 1) return mb.toFixed(mb >= 10 ? 1 : 2) + ' MB';
+    kb = n / 1024;
+    if (kb >= 1) return kb.toFixed(kb >= 10 ? 1 : 2) + ' KB';
+    return Math.round(n) + ' B';
+  }
+  function humanUptime(sec) {
+    var n = Number(sec), d, h, m, parts = [];
+    if (!isFinite(n) || n <= 0) return '—';
+    d = Math.floor(n / 86400); n %= 86400;
+    h = Math.floor(n / 3600); m = Math.floor((n % 3600) / 60);
+    if (d) parts.push(d + 'd');
+    if (h || d) parts.push(h + 'h');
+    parts.push(m + 'm');
+    return parts.join(' ');
+  }
+  function request(url, asJson) {
+    return fetch(url, {cache:'no-store'}).then(function (r) {
+      return r.text().then(function (text) {
+        if (!r.ok) throw new Error('HTTP ' + r.status + (text ? ': ' + text : ''));
+        if (!asJson) return text;
+        try { return text ? JSON.parse(text) : {}; }
+        catch (e) { throw new Error('Invalid JSON from ' + url); }
+      });
+    });
+  }
+  function showApiError(message) {
+    var box = el('apiError');
+    if (!box) return;
+    box.textContent = message;
+    box.className = 'api-error';
+  }
+  function clearApiError() {
+    var box = el('apiError');
+    if (!box) return;
+    box.className = 'api-error hidden';
+    box.textContent = '';
+  }
+  function markLive(ok) {
+    var dot = el('liveDot');
+    if (dot) dot.className = ok ? 'dot live' : 'dot offline';
+    setValue('live', ok ? 'LIVE' : 'OFFLINE');
+    if (ok) setValue('lastUpdate', 'Updated ' + new Date().toLocaleTimeString());
+  }
+  function renderRows(id, rows) {
+    var host = el(id), i, row, value;
+    if (!host) return;
+    host.innerHTML = '';
+    for (i = 0; i < rows.length; i++) {
+      value = rows[i][1];
+      if (value === undefined || value === null || value === '') value = '—';
+      row = document.createElement('div');
+      row.className = 'kv-row';
+      row.innerHTML = '<span>' + escapeHtml(rows[i][0]) + '</span><strong>' + escapeHtml(value) + '</strong>';
+      host.appendChild(row);
+    }
+  }
+  function cpuValue(obj, i) {
+    var a = obj['core' + i], b = obj['cpu_usage_' + i], n;
+    if (a !== undefined) n = Number(a); else if (b !== undefined) n = Number(b); else return null;
+    if (!isFinite(n)) return null;
+    return Math.max(0, Math.min(100, n));
+  }
+  function renderCPU(obj, target) {
+    var host = el(target), i, n, item;
+    if (!host) return;
+    host.innerHTML = '';
+    for (i = 0; i < 8; i++) {
+      n = cpuValue(obj, i);
+      if (n === null) n = 0;
+      item = document.createElement('div');
+      item.className = 'cpu-item';
+      item.innerHTML = '<div class="cpu-line"><span>Core ' + i + '</span><b>' + n.toFixed(0) + '%</b></div>' +
+                       '<div class="bar"><i style="width:' + n + '%"></i></div>';
+      host.appendChild(item);
+    }
+  }
+  function averageCPU(obj) {
+    var i, total = 0, count = 0, n;
+    if (obj.average !== undefined && isFinite(Number(obj.average))) return Number(obj.average);
+    for (i = 0; i < 8; i++) {
+      n = cpuValue(obj, i);
+      if (n !== null) { total += n; count++; }
+    }
+    return count ? total / count : 0;
+  }
+
+  function loadStatus() {
+    return request('/api/v1/status', true).then(function (s) {
+      setValue('serverName', s.name || 'PS5 Monitor');
+      setValue('version', s.version);
+      markLive(true);
+      clearApiError();
+    }).catch(function (e) {
+      markLive(false);
+      showApiError('Monitor API unavailable: ' + e.message);
+    });
+  }
+
+  function loadStaticSystem() {
+    request('/api/v1/hardware', false).then(function (text) {
+      var hw = parseKV(text);
+      setValue('model', hw.model || hw.hw_model);
+      setValue('cpuCores', hw.ncpu);
+      renderRows('hardwareTable', [
+        ['Model', hw.model || hw.hw_model],
+        ['Architecture', hw.hw_machine || 'amd64'],
+        ['Operating System', hw.os],
+        ['CPU Cores', hw.ncpu]
+      ]);
+    }).catch(function (e) { renderRows('hardwareTable', [['Error', e.message]]); });
+
+    request('/api/v1/extended', false).then(function (text) {
+      var ex = parseKV(text), thermal = ex.thermal_alert;
+      setValue('firmware', ex.firmware_version);
+      if (ex.total_operating_time_sec) setValue('uptime', humanUptime(ex.total_operating_time_sec));
+      if (thermal === '0') thermal = 'Normal';
+      else if (thermal !== undefined) thermal = 'Alert ' + thermal;
+      renderRows('extendedTable', [
+        ['Firmware', ex.firmware_version],
+        ['Uptime', humanUptime(ex.total_operating_time_sec)],
+        ['Boot Count', ex.boot_count],
+        ['Shutdown Count', ex.shutdown_count],
+        ['Thermal Status', thermal],
+        ['BD Drive', ex.bd_drive_power === '1' ? 'On' : (ex.bd_drive_power === '0' ? 'Off' : '—')]
+      ]);
+    }).catch(function (e) { renderRows('extendedTable', [['Error', e.message]]); });
+  }
+
+  function loadSensors() {
+    return request('/api/v1/sensors', false).then(function (text) {
+      var s = parseKV(text);
+      setValue('cpuTemp', s.cpu_temp ? s.cpu_temp + ' °C' : '—');
+      setValue('socTemp', s.soc_temp ? s.soc_temp + ' °C' : '—');
+      setValue('cpuClock', s.cpu_freq_mhz ? s.cpu_freq_mhz + ' MHz' : '—');
+      setValue('power', s.soc_power_mw ? (Number(s.soc_power_mw) / 1000).toFixed(1) + ' W' : '—');
+      /* CPU utilization intentionally does NOT render from /sensors.  That
+       * endpoint can contain instantaneous zeros and used to race /cpu,
+       * making the dashboard flash between real values and 0%. */
+      markLive(true);
+    }).catch(function (e) { showApiError('Sensor API failed: ' + e.message); });
+  }
+
+  function loadCPU() {
+    if (cpuBusy) return Promise.resolve();
+    cpuBusy = true;
+    return request('/api/v1/cpu', false).then(function (text) {
+      var c = parseKV(text), avg = averageCPU(c);
+      /* Keep the last scraped values on screen until this complete sample
+       * arrives.  Only /api/v1/cpu owns CPU rendering. */
+      renderCPU(c, 'cpuBarsFull');
+      setValue('cpuAverage', avg.toFixed(0) + '%');
+      setValue('cpuAverageFull', avg.toFixed(0) + '%');
+    }).catch(function () {
+      /* Do not clear a good sample on a transient read failure. */
+    }).then(function () { cpuBusy = false; });
+  }
+
+  function memoryPercent(total, used) {
+    var t = Number(total), u = Number(used);
+    if (!isFinite(t) || t <= 0 || !isFinite(u) || u < 0) return 0;
+    return Math.max(0, Math.min(100, (u / t) * 100));
+  }
+
+  function memoryBar(label, used, total, detail) {
+    var pct = memoryPercent(total, used);
+    return '<div class="memory-meter">' +
+      '<div class="memory-meter-head"><span>' + escapeHtml(label) + '</span><strong>' + pct.toFixed(0) + '%</strong></div>' +
+      '<div class="memory-bar"><i style="width:' + pct.toFixed(2) + '%"></i></div>' +
+      '<div class="memory-meter-foot"><span>' + escapeHtml(humanBytes(used)) + ' used</span><span>' + escapeHtml(humanBytes(total)) + ' total</span></div>' +
+      (detail ? '<div class="memory-detail">' + detail + '</div>' : '') +
+      '</div>';
+  }
+
+  function loadMemory() {
+    return request('/api/v1/memory', false).then(function (text) {
+      var m = parseKV(text);
+      var total = Number(m.physical_total || m.direct_total || 0);
+      var free = Number(m.free_memory || 0);
+      var used = total > free ? total - free : Number(m.direct_used || 0);
+      var pct = memoryPercent(total, used);
+      var host = el('memoryVisual');
+      setValue('totalRam', humanBytes(total));
+      setValue('ramUsed', humanBytes(used) + (total > 0 ? ' / ' + humanBytes(total) : ''));
+      setValue('ramUsedPct', total > 0 ? pct.toFixed(0) + '% used' : '');
+      if (!host) return;
+      host.innerHTML = memoryBar('System Memory', used, total,
+        '<span>Free <b>' + escapeHtml(humanBytes(free)) + '</b></span>');
+    }).catch(function (e) {
+      var host = el('memoryVisual');
+      if (host) host.innerHTML = '<div class="storage-unmounted error-text">' + escapeHtml(e.message) + '</div>';
+    });
+  }
+
+  function loadPerf() {
+    if (perfBusy) return Promise.resolve();
+    perfBusy = true;
+    return request('/api/v1/perf', true).then(function (p) {
+      var context = p.foreground || '—';
+      if (context === 'UNKNOWN' && p.game_resident) context = 'GAME RESIDENT';
+      setValue('foregroundBadge', context);
+      setValue('gameContext', context);
+      setValue('gameTitle', p.title_id || '—');
+      setValue('gpuClock', p.gpu_clock_valid ? p.gpu_clock_mhz + ' MHz' : '—');
+      setValue('fanDuty', p.fan_valid ? Number(p.fan_duty_pct).toFixed(1) + '%' : '—');
+      setValue('fps', p.fps_valid ? p.fps : '—');
+      setValue('gameStatus', p.game_resident ? (p.fps_valid ? 'Game rendering' : 'Game detected') : 'No game running');
+    }).catch(function (e) { showApiError('Performance API failed: ' + e.message); })
+      .then(function () { perfBusy = false; });
+  }
+
+  function parseNetworkSample(text) {
+    var base = parseKV(text), lines = String(text || '').split(/\r?\n/), i, m;
+    var candidates = [], best = null, score;
+    for (i = 0; i < lines.length; i++) {
+      m = /^if=([^|]+)\|rx=(\d+)\|tx=(\d+)$/.exec(lines[i].trim());
+      if (!m || /^lo/.test(m[1])) continue;
+      candidates.push({name:m[1], rx:Number(m[2]), tx:Number(m[3])});
+    }
+    for (i = 0; i < candidates.length; i++) {
+      score = candidates[i].rx + candidates[i].tx;
+      if (!best || score > best.rx + best.tx) best = candidates[i];
+    }
+    return {base:base, iface:best};
+  }
+
+  function cleanDns(value) {
+    if (!value || value === '0.0.0.0') return '—';
+    return value;
+  }
+
+  function loadNetwork() {
+    if (netBusy) return Promise.resolve();
+    netBusy = true;
+    return request('/api/v1/network', false).then(function (t) {
+      var sample = parseNetworkSample(t), base = sample.base, nic = sample.iface;
+      renderRows('networkTable', [
+        ['State', base.state === '3' || base.state === '2' ? 'Online' : (base.state || '—')],
+        ['Interface', nic ? nic.name : (base.device || '—')],
+        ['Hostname', base.dhcp_hostname || base.ip || '—'],
+        ['IPv4 Address', base.ip_address || base.f14 || '—'],
+        ['Netmask', base.netmask || base.f15 || '—'],
+        ['Gateway', base.default_route || base.f16 || '—'],
+        ['Primary DNS', cleanDns(base.primary_dns || base.f17)],
+        ['Secondary DNS', cleanDns(base.secondary_dns || base.f18)],
+        ['MAC', base.mac || '—'],
+        ['MTU', base.mtu || '—']
+      ]);
+    }).catch(function (e) {
+      renderRows('networkTable', [['Error', e.message]]);
+    }).then(function () { netBusy = false; });
+  }
+
+  function storagePercent(total, used) {
+    var t = Number(total), u = Number(used);
+    if (!isFinite(t) || t <= 0 || !isFinite(u) || u < 0) return 0;
+    return Math.max(0, Math.min(100, (u / t) * 100));
+  }
+
+  function renderStorageVolume(id, volume, reservedBytes) {
+    var host = el(id), total, used, free, pct, html;
+    if (!host) return;
+    if (!volume || !volume.mounted) {
+      host.innerHTML = '<div class="storage-unmounted">Not mounted</div>';
+      return;
+    }
+    total = Number(volume.total || 0);
+    used = Number(volume.used || 0);
+    free = Number(volume.free || 0);
+    pct = storagePercent(total, used);
+    html = '<div class="storage-stats">' +
+      '<div><span>Total</span><strong>' + escapeHtml(humanBytes(total)) + '</strong></div>' +
+      '<div><span>Used</span><strong>' + escapeHtml(humanBytes(used)) + '</strong></div>' +
+      '<div><span>Free</span><strong>' + escapeHtml(humanBytes(free)) + '</strong></div>' +
+      '<div><span>Usage</span><strong>' + pct.toFixed(1) + '%</strong></div>' +
+      '</div>' +
+      '<div class="storage-bar" aria-label="Storage used ' + pct.toFixed(1) + ' percent"><i style="width:' + pct.toFixed(2) + '%"></i></div>' +
+      '<div class="storage-caption"><span>' + escapeHtml(humanBytes(used)) + ' used</span><span>' + escapeHtml(humanBytes(free)) + ' free</span></div>';
+    if (reservedBytes !== undefined && reservedBytes !== null && Number(reservedBytes) > 0) {
+      html += '<div class="storage-extra"><span>Reserved / System</span><strong>' + escapeHtml(humanBytes(reservedBytes)) + '</strong></div>';
+    }
+    host.innerHTML = html;
+  }
+
+  function loadStorage() {
+    return Promise.all([request('/api/v1/storage', false), request('/api/v1/volumes', true)]).then(function (r) {
+      var a = String(r[0]).split('|'), total = Number(a[0] || 0), free = Number(a[1] || 0), reserved = Number(a[3] || 0);
+      var used = total > free ? total - free : 0;
+      renderStorageVolume('storageConsole', {mounted:true,total:total,used:used,free:free}, reserved);
+      renderStorageVolume('storageM2', r[1].m2);
+      renderStorageVolume('storageUsb', r[1].usb);
+    }).catch(function (e) {
+      var msg = '<div class="storage-unmounted error-text">' + escapeHtml(e.message) + '</div>';
+      if (el('storageConsole')) el('storageConsole').innerHTML = msg;
+      if (el('storageM2')) el('storageM2').innerHTML = '<div class="storage-unmounted">Unavailable</div>';
+      if (el('storageUsb')) el('storageUsb').innerHTML = '<div class="storage-unmounted">Unavailable</div>';
+    });
+  }
+
+  function showView(name) {
+    var views = document.querySelectorAll('.view'), buttons = document.querySelectorAll('.nav-item'), i, target, nav;
+    currentView = name;
+    for (i = 0; i < views.length; i++) views[i].classList.remove('active');
+    for (i = 0; i < buttons.length; i++) buttons[i].classList.remove('active');
+    target = el('view-' + name); if (target) target.classList.add('active');
+    nav = document.querySelector('.nav-item[data-view="' + name + '"]'); if (nav) nav.classList.add('active');
+    setValue('pageTitle', nav && nav.querySelector('.nav-label') ? nav.querySelector('.nav-label').textContent.trim() : name);
+    setValue('pageSubtitle', subtitles[name] || '');
+    if (name === 'network') loadNetwork();
+    if (name === 'storage') loadStorage();
+  }
+
+  function bindUI() {
+    var buttons = document.querySelectorAll('.nav-item'), i;
+    for (i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener('click', function () { showView(this.getAttribute('data-view')); });
+    }
+  }
+
+  function boot() {
+    bindUI();
+    loadStatus();
+    loadStaticSystem();
+    loadSensors();
+    loadCPU();
+    loadMemory();
+    loadPerf();
+    setInterval(loadStatus, 3000);
+    setInterval(loadSensors, 1000);
+    /* One authoritative CPU scrape every 1.5 s. The displayed sample is held
+     * unchanged until the next complete /cpu response arrives. */
+    setInterval(loadCPU, 1500);
+    setInterval(loadMemory, 1500);
+    setInterval(loadPerf, 500);
+    setInterval(function () { if (currentView === 'network') loadNetwork(); }, 10000);
+    setInterval(function () { if (currentView === 'storage') loadStorage(); }, 5000);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+}());
+</script>
+</body>
+</html>

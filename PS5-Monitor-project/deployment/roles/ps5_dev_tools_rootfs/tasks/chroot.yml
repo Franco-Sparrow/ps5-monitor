@@ -1,0 +1,87 @@
+---
+- name: Ensure required mount points exist in PS5 development rootfs
+  file:
+    path: "{{ ps5_dev_tools_rootfs }}{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /proc
+    - /sys
+    - /dev
+    - /dev/pts
+    - /run
+    - /workspace
+    - /output
+
+- name: Check runtime mounts in PS5 development rootfs
+  command:
+    argv:
+      - mountpoint
+      - -q
+      - "{{ ps5_dev_tools_rootfs }}{{ item.path }}"
+  loop: "{{ ps5_dev_tools_chroot_mounts }}"
+  loop_control:
+    label: "{{ item.path }}"
+  register: ps5_runtime_mount_status
+  changed_when: false
+  failed_when: false
+
+- name: Mount proc inside PS5 development rootfs
+  command:
+    argv: [mount, -t, proc, proc, "{{ ps5_dev_tools_rootfs }}/proc"]
+  when: ps5_runtime_mount_status.results[0].rc != 0
+
+- name: Bind mount sys inside PS5 development rootfs
+  command:
+    argv: [mount, --rbind, /sys, "{{ ps5_dev_tools_rootfs }}/sys"]
+  when: ps5_runtime_mount_status.results[1].rc != 0
+
+- name: Bind mount dev inside PS5 development rootfs
+  command:
+    argv: [mount, --rbind, /dev, "{{ ps5_dev_tools_rootfs }}/dev"]
+  when: ps5_runtime_mount_status.results[2].rc != 0
+
+- name: Bind mount run inside PS5 development rootfs
+  command:
+    argv: [mount, --rbind, /run, "{{ ps5_dev_tools_rootfs }}/run"]
+  when: ps5_runtime_mount_status.results[3].rc != 0
+
+- name: Check persistent workspace mount
+  command:
+    argv: [mountpoint, -q, "{{ ps5_dev_tools_rootfs }}/workspace"]
+  register: ps5_workspace_mount
+  changed_when: false
+  failed_when: false
+
+- name: Bind persistent workspace into PS5 development rootfs
+  command:
+    argv: [mount, --bind, "{{ ps5_dev_tools_workspace_dir }}", "{{ ps5_dev_tools_rootfs }}/workspace"]
+  when: ps5_workspace_mount.rc != 0
+
+- name: Check persistent artifacts mount
+  command:
+    argv: [mountpoint, -q, "{{ ps5_dev_tools_rootfs }}/output"]
+  register: ps5_artifacts_mount
+  changed_when: false
+  failed_when: false
+
+- name: Bind persistent artifact directory into PS5 development rootfs
+  command:
+    argv: [mount, --bind, "{{ ps5_dev_tools_artifacts_dir }}", "{{ ps5_dev_tools_rootfs }}/output"]
+  when: ps5_artifacts_mount.rc != 0
+
+- name: Configure Ubuntu repositories in PS5 development rootfs
+  copy:
+    dest: "{{ ps5_dev_tools_rootfs }}/etc/apt/sources.list"
+    mode: "0644"
+    content: |
+      deb http://archive.ubuntu.com/ubuntu {{ ps5_dev_tools_os_codename }} main restricted universe multiverse
+      deb http://archive.ubuntu.com/ubuntu {{ ps5_dev_tools_os_codename }}-updates main restricted universe multiverse
+      deb http://security.ubuntu.com/ubuntu {{ ps5_dev_tools_os_codename }}-security main restricted universe multiverse
+
+- name: Configure DNS inside PS5 development rootfs
+  copy:
+    src: /etc/resolv.conf
+    dest: "{{ ps5_dev_tools_rootfs }}/etc/resolv.conf"
+    remote_src: true
+    mode: "0644"

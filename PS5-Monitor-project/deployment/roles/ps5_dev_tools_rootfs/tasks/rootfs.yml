@@ -1,0 +1,60 @@
+---
+- name: Ensure PS5 development parent and persistent directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ ps5_dev_tools_parent_dir }}"
+    - "{{ ps5_dev_tools_workspace_dir }}"
+    - "{{ ps5_dev_tools_artifacts_dir }}"
+
+- name: Check PS5 development rootfs
+  stat:
+    path: "{{ ps5_dev_tools_rootfs }}"
+  register: ps5_rootfs_stat
+
+- name: Create PS5 development rootfs when missing
+  command:
+    argv:
+      - debootstrap
+      - "--arch={{ ps5_dev_tools_architecture }}"
+      - "{{ ps5_dev_tools_os_codename }}"
+      - "{{ ps5_dev_tools_rootfs }}"
+      - "{{ ps5_dev_tools_ubuntu_mirror }}"
+  when: not ps5_rootfs_stat.stat.exists
+  changed_when: true
+
+- name: Validate OS metadata exists inside PS5 development rootfs
+  stat:
+    path: "{{ ps5_dev_tools_rootfs }}/etc/os-release"
+  register: ps5_rootfs_os_release
+
+- name: Fail when PS5 development rootfs is incomplete
+  assert:
+    that:
+      - ps5_rootfs_os_release.stat.exists | bool
+    fail_msg: >-
+      {{ ps5_dev_tools_rootfs }} exists but does not contain /etc/os-release.
+      Set ps5_dev_tools_recreate_rootfs=true and run the playbook again.
+
+- name: Read PS5 development rootfs OS metadata
+  shell: |
+    set -euo pipefail
+    . "{{ ps5_dev_tools_rootfs }}/etc/os-release"
+    printf '%s\n' "ID=${ID}" "VERSION_ID=${VERSION_ID}" "VERSION_CODENAME=${VERSION_CODENAME}"
+  args:
+    executable: /bin/bash
+  register: ps5_rootfs_os
+  changed_when: false
+
+- name: Validate PS5 development rootfs operating system
+  assert:
+    that:
+      - "'ID=' ~ ps5_dev_tools_os_distribution in ps5_rootfs_os.stdout_lines"
+      - "'VERSION_ID=' ~ ps5_dev_tools_os_version in ps5_rootfs_os.stdout_lines"
+      - "'VERSION_CODENAME=' ~ ps5_dev_tools_os_codename in ps5_rootfs_os.stdout_lines"
+    fail_msg: >-
+      Existing PS5 development rootfs does not match Ubuntu
+      {{ ps5_dev_tools_os_version }} ({{ ps5_dev_tools_os_codename }}).
+      Set ps5_dev_tools_recreate_rootfs=true to recreate only this rootfs.
