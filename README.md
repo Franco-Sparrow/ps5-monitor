@@ -160,7 +160,7 @@ Inside the rootfs the workspace and output directories are mounted as:
 /output
 ```
 
-## Rootfs contents
+## 1.1. Rootfs contents
 
 The playbook installs an Ubuntu **24.04 (Noble) amd64** rootfs with the build tools required by the project, including:
 
@@ -199,7 +199,7 @@ and configures:
 PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
 ```
 
-## Reusing the rootfs
+## 1.2. Reusing the rootfs
 
 The normal setting is:
 
@@ -211,7 +211,7 @@ so rerunning the preparation playbook reuses and validates the existing rootfs i
 
 It is safe and useful to rerun the rootfs playbook after a build-host reboot because it also restores the required bind mounts.
 
-## Recreate the rootfs
+## 1.3. Recreate the rootfs
 
 Only when a completely clean build environment is required:
 
@@ -282,7 +282,7 @@ Published SHA256: .../deployment/public/ps5-monitor-v1.4.4.elf.sha256
 
 ---
 
-# Build output
+# 3. Build output
 
 The internal unversioned build output is:
 
@@ -323,7 +323,7 @@ ps5-monitor-v1.4.4.elf: OK
 
 ---
 
-# Using PS5 Monitor
+# 4. Using PS5 Monitor
 
 Copy or send the versioned ELF to the PS5 using the developer's normal PS5 ELF loader.
 
@@ -355,7 +355,7 @@ ps5-monitor.elf
 
 ---
 
-# Web UI
+# 5. Web UI
 
 The Web UI files are located at:
 
@@ -393,7 +393,7 @@ Ctrl + F5
 
 ---
 
-# Updating the project version
+# 5. Updating the project version
 
 The project uses numeric three-part versions:
 
@@ -442,7 +442,7 @@ deployment/public/ps5-monitor-v1.4.5.elf
 
 ---
 
-# Manual access to the build rootfs
+# 6. Manual access to the build rootfs
 
 For debugging, the rootfs can be entered manually from the Linux build host:
 
@@ -468,7 +468,7 @@ Normal development should still use the Ansible build playbook so the build and 
 
 ---
 
-# Typical developer workflow
+# 7. Typical developer workflow
 
 For a **new build machine**:
 
@@ -502,65 +502,6 @@ Then build normally.
 
 ---
 
-# Troubleshooting
-
-## Rootfs validation fails
-
-Run the rootfs preparation playbook again:
-
-```bash
-ansible-playbook -i inventory/ps5-dev-tools.yml \
-  playbooks/prepare_ps5_dev_tools.yml
-```
-
-Do not immediately recreate the rootfs unless repair/revalidation fails.
-
----
-
-## `sqlite3.h` or `-lsqlite3` is missing
-
-Use the normal build playbook:
-
-```bash
-ansible-playbook -i inventory/ps5-dev-tools.yml \
-  playbooks/build_ps5_monitor.yml
-```
-
-The `ps5_monitor` role checks for the PS5 cross-compiled SQLite headers/library and installs the PacBrew homebrew bundle automatically when necessary.
-
-Do not fix this by installing the host Linux SQLite development package.
-
----
-
-## Web page does not open
-
-Confirm:
-
-1. The ELF is still running on the PS5.
-2. The PC/browser and PS5 are reachable on the same LAN.
-3. TCP port `9843` is reachable.
-4. The URL uses the current PS5 IP:
-
-```text
-http://PS5-IP:9843/
-```
-
----
-
-## New Web UI changes do not appear
-
-Use:
-
-```text
-Ctrl + F5
-```
-
-to bypass browser cache.
-
-Also confirm a new ELF was actually rebuilt and loaded.
-
----
-
 # Important paths
 
 | Purpose | Path |
@@ -582,8 +523,4 @@ Also confirm a new ELF was actually rebuilt and loaded.
 **Developed by Sparrow**  
 **Powered by AI**
 
-Third-party source provenance and notices are kept in:
-
-```text
-PS5-Monitor/THIRD_PARTY_NOTICES.md
-```
+This project uses some telemetry components from the [PS5-Suite](https://github.com/manos555555/PS5-Suite) project.
