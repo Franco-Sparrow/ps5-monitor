@@ -1,0 +1,97 @@
+---
+- name: Validate clang 18 inside PS5 development rootfs
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - clang-18
+      - --version
+  register: ps5_clang_version
+  changed_when: false
+
+- name: Validate lld 18 inside PS5 development rootfs
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - ld.lld-18
+      - --version
+  register: ps5_lld_version
+  changed_when: false
+
+- name: Validate CMake inside PS5 development rootfs
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - cmake
+      - --version
+  register: ps5_cmake_version
+  changed_when: false
+
+- name: Check PS5 Payload SDK root directory
+  stat:
+    path: "{{ ps5_dev_tools_rootfs }}{{ ps5_payload_sdk_install_dir }}"
+  register: ps5_sdk_root
+
+- name: Check PS5 Payload SDK version marker
+  stat:
+    path: "{{ ps5_dev_tools_rootfs }}{{ ps5_payload_sdk_install_dir }}/.ps5-dev-tools-version"
+  register: ps5_sdk_marker
+
+- name: Validate PS5_PAYLOAD_SDK environment inside rootfs
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - /bin/bash
+      - -lc
+      - >-
+        source /etc/profile.d/ps5-dev-tools.sh &&
+        test "$PS5_PAYLOAD_SDK" = "{{ ps5_payload_sdk_install_dir }}" &&
+        test -d "$PS5_PAYLOAD_SDK"
+  register: ps5_sdk_environment
+  changed_when: false
+
+- name: Verify PS5 Payload SDK installation is not empty
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - /bin/bash
+      - -lc
+      - >-
+        find "{{ ps5_payload_sdk_install_dir }}" -mindepth 1 -maxdepth 2
+        -type f -print -quit | grep -q .
+  register: ps5_sdk_nonempty
+  changed_when: false
+
+- name: Validate PS5 payload development environment
+  assert:
+    that:
+      - ps5_clang_version.rc == 0
+      - ps5_lld_version.rc == 0
+      - ps5_cmake_version.rc == 0
+      - ps5_sdk_root.stat.exists | bool
+      - ps5_sdk_root.stat.isdir | bool
+      - ps5_sdk_marker.stat.exists | bool
+      - ps5_sdk_environment.rc == 0
+      - ps5_sdk_nonempty.rc == 0
+    fail_msg: >-
+      PS5 development environment validation failed. Expected clang-18,
+      ld.lld-18, CMake, and a non-empty PS5 Payload SDK installation at
+      {{ ps5_payload_sdk_install_dir }} with the local SDK version marker.
+
+- name: Display PS5 development environment summary
+  debug:
+    msg:
+      - "PS5 build parent: {{ ps5_dev_tools_parent_dir }}"
+      - "PS5 rootfs: {{ ps5_dev_tools_rootfs }}"
+      - "Persistent workspace: {{ ps5_dev_tools_workspace_dir }}"
+      - "Persistent artifacts: {{ ps5_dev_tools_artifacts_dir }}"
+      - "PS5 Payload SDK: v{{ ps5_payload_sdk_version }} at {{ ps5_payload_sdk_install_dir }}"
+      - "Product: {{ ps5_product_name }}"
+      - "Project workspace: {{ ps5_dev_tools_workspace_dir }}/{{ ps5_product_name }}"
+      - "Inside chroot: {{ ps5_product_workspace }}"
+      - "Expected ELF: /output/{{ ps5_product_artifact_name }}"
+      - "Recreate only this rootfs with: -e ps5_dev_tools_recreate_rootfs=true"

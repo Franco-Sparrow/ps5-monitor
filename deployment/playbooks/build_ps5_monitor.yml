@@ -1,0 +1,8 @@
+---
+- name: Build PS5 Monitor
+  hosts: ps5_dev_tools
+  become: true
+  gather_facts: false
+
+  roles:
+    - role: ps5_monitor

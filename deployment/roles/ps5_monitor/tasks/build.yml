@@ -1,0 +1,71 @@
+---
+- name: Ensure artifact staging directory exists
+  file:
+    path: "{{ ps5_dev_tools_artifacts_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure public release directory exists
+  file:
+    path: "{{ ps5_public_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Clean PS5 Monitor workspace
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - /bin/bash
+      - -lc
+      - "cd {{ ps5_monitor_chroot_workspace }} && make clean"
+  changed_when: true
+
+- name: Build PS5 Monitor payload
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - /bin/bash
+      - -lc
+      - "cd {{ ps5_monitor_chroot_workspace }} && make"
+  register: ps5mon_build
+  changed_when: true
+
+- name: Check PS5 Monitor build output
+  stat:
+    path: "{{ ps5_monitor_host_workspace }}/{{ ps5_monitor_build_output }}"
+  register: ps5mon_elf
+
+- name: Validate PS5 Monitor ELF
+  assert:
+    that:
+      - ps5mon_elf.stat.exists | bool
+      - ps5mon_elf.stat.isreg | bool
+      - ps5mon_elf.stat.size > 0
+    fail_msg: "PS5 Monitor ELF was not generated."
+
+- name: Publish versioned PS5 Monitor ELF
+  copy:
+    src: "{{ ps5_monitor_host_workspace }}/{{ ps5_monitor_build_output }}"
+    dest: "{{ ps5_public_dir }}/{{ ps5_monitor_artifact_name }}"
+    remote_src: true
+    mode: "0644"
+
+- name: Generate PS5 Monitor checksum
+  shell: |
+    set -euo pipefail
+    cd "{{ ps5_public_dir }}"
+    sha256sum "{{ ps5_monitor_artifact_name }}" > "{{ ps5_monitor_checksum_name }}"
+  args:
+    executable: /bin/bash
+  changed_when: true
+
+- name: Display PS5 Monitor build result
+  debug:
+    msg:
+      - "Product: PS5 Monitor"
+      - "Monitor version: {{ ps5_monitor_version }}"
+      - "Web port: {{ ps5_monitor_web_port }}"
+      - "Published ELF: {{ ps5_public_dir }}/{{ ps5_monitor_artifact_name }}"
+      - "Published SHA256: {{ ps5_public_dir }}/{{ ps5_monitor_checksum_name }}"

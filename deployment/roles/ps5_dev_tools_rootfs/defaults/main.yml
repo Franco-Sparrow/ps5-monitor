@@ -1,0 +1,50 @@
+---
+# Packages required on the Debian/Ubuntu automation host only.
+ps5_dev_tools_host_packages:
+  - debootstrap
+  - ca-certificates
+  - rsync
+  - curl
+  - wget
+  - unzip
+
+# Toolchain and utilities installed INSIDE the PS5 development rootfs.
+ps5_dev_tools_rootfs_packages:
+  - bash
+  - ca-certificates
+  - git
+  - wget
+  - curl
+  - unzip
+  - xz-utils
+  - build-essential
+  - make
+  - clang-18
+  - lld-18
+  - llvm-18
+  - cmake
+  - ninja-build
+  - meson
+  - pkg-config
+  - python3
+  - python3-pip
+  - python3-pyelftools
+  - socat
+  - file
+  - binutils
+  - rsync
+
+ps5_dev_tools_chroot_mounts:
+  - path: /proc
+    type: proc
+    source: proc
+    mode: fs
+  - path: /sys
+    source: /sys
+    mode: rbind
+  - path: /dev
+    source: /dev
+    mode: rbind
+  - path: /run
+    source: /run
+    mode: rbind

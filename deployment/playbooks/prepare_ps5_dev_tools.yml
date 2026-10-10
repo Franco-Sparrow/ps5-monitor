@@ -1,0 +1,8 @@
+---
+- name: Prepare isolated PS5 payload development rootfs
+  hosts: ps5_dev_tools
+  become: true
+  gather_facts: true
+
+  roles:
+    - ps5_dev_tools_rootfs

@@ -1,0 +1,30 @@
+---
+- name: Check PS5 development rootfs
+  stat:
+    path: "{{ ps5_dev_tools_rootfs }}"
+  register: ps5mon_rootfs
+
+- name: Check PS5 Payload SDK compiler
+  stat:
+    path: "{{ ps5_dev_tools_rootfs }}{{ ps5_payload_sdk_install_dir }}/bin/prospero-clang"
+  register: ps5mon_compiler
+
+- name: Check PS5 Monitor source tree
+  stat:
+    path: "{{ ps5_monitor_source_dir }}/main.c"
+  register: ps5mon_source
+
+- name: Validate PS5 Monitor prerequisites
+  assert:
+    that:
+      - ps5mon_rootfs.stat.exists | bool
+      - ps5mon_rootfs.stat.isdir | bool
+      - ps5mon_compiler.stat.exists | bool
+      - ps5mon_compiler.stat.isreg | bool
+      - ps5mon_source.stat.exists | bool
+      - ps5mon_source.stat.isreg | bool
+      - ps5_monitor_version is match('^[0-9]+\.[0-9]+\.[0-9]+$')
+      - ps5_monitor_web_port | int == 9843
+    fail_msg: >-
+      PS5 Monitor build prerequisites are not ready. Keep/reuse the existing
+      ps5_dev_tools_rootfs and ensure the monitor source is present beside deployment/.

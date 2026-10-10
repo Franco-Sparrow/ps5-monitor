@@ -1,0 +1,8 @@
+---
+all:
+  children:
+    ps5_dev_tools:
+      hosts:
+        localhost:
+          ansible_connection: local
+          ansible_python_interpreter: "/opt/ansible/venv/bin/python3.13"

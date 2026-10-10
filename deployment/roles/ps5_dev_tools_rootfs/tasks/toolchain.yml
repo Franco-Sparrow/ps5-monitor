@@ -1,0 +1,47 @@
+---
+- name: Repair interrupted dpkg state inside PS5 development rootfs
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - /usr/bin/env
+      - DEBIAN_FRONTEND=noninteractive
+      - dpkg
+      - --configure
+      - -a
+  register: ps5_dpkg_repair
+  changed_when: ps5_dpkg_repair.stdout | length > 0
+
+- name: Update APT metadata inside PS5 development rootfs
+  command:
+    argv:
+      - chroot
+      - "{{ ps5_dev_tools_rootfs }}"
+      - /usr/bin/env
+      - DEBIAN_FRONTEND=noninteractive
+      - apt-get
+      - update
+  changed_when: false
+
+- name: Install PS5 payload development toolchain inside rootfs
+  command:
+    argv: >-
+      {{
+        ['chroot', ps5_dev_tools_rootfs, '/usr/bin/env', 'DEBIAN_FRONTEND=noninteractive',
+         'apt-get', 'install', '-y', '--no-install-recommends']
+        + ps5_dev_tools_rootfs_packages
+      }}
+  register: ps5_toolchain_install
+  changed_when: >-
+    '0 upgraded, 0 newly installed, 0 to remove' not in ps5_toolchain_install.stdout
+
+- name: Create PS5 development environment profile
+  copy:
+    dest: "{{ ps5_dev_tools_rootfs }}/etc/profile.d/ps5-dev-tools.sh"
+    mode: "0644"
+    content: |
+      export PS5_PAYLOAD_SDK={{ ps5_payload_sdk_install_dir }}
+      export CC=clang-18
+      export CXX=clang++-18
+      export LD=ld.lld-18
+      export PATH="$PS5_PAYLOAD_SDK/bin:$PATH"

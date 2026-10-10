@@ -1,0 +1,56 @@
+---
+- name: Check PS5 cross-compiled SQLite header
+  stat:
+    path: "{{ ps5_monitor_hbroot_host }}/include/sqlite3.h"
+  register: ps5mon_sqlite_header
+
+- name: Check PS5 cross-compiled SQLite library
+  stat:
+    path: "{{ ps5_monitor_hbroot_host }}/lib/libsqlite3.a"
+  register: ps5mon_sqlite_library
+
+- name: Download PacBrew PS5 library bundle
+  get_url:
+    url: "{{ ps5_monitor_pacbrew_archive_url }}"
+    dest: "/tmp/ps5-payload-dev-v{{ ps5_monitor_pacbrew_version }}.tar.gz"
+    mode: "0644"
+  when: not ps5mon_sqlite_header.stat.exists or not ps5mon_sqlite_library.stat.exists
+
+- name: Install only PacBrew homebrew target libraries into the existing PS5 SDK
+  shell: |
+    set -euo pipefail
+    tmpdir="$(mktemp -d)"
+    trap 'rm -rf "$tmpdir"' EXIT
+
+    tar -xzf "/tmp/ps5-payload-dev-v{{ ps5_monitor_pacbrew_version }}.tar.gz" -C "$tmpdir"
+    src="$(find "$tmpdir" -type d -path '*/target/user/homebrew' -print -quit)"
+
+    if [ -z "$src" ]; then
+      echo "Unable to locate target/user/homebrew in PacBrew archive" >&2
+      exit 1
+    fi
+
+    mkdir -p "{{ ps5_monitor_hbroot_host }}"
+    rsync -a "$src/" "{{ ps5_monitor_hbroot_host }}/"
+  args:
+    executable: /bin/bash
+  when: not ps5mon_sqlite_header.stat.exists or not ps5mon_sqlite_library.stat.exists
+  changed_when: true
+
+- name: Re-check PS5 cross-compiled SQLite files
+  stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ ps5_monitor_hbroot_host }}/include/sqlite3.h"
+    - "{{ ps5_monitor_hbroot_host }}/lib/libsqlite3.a"
+  register: ps5mon_sqlite_files
+
+- name: Validate PS5 cross-compiled SQLite dependency
+  assert:
+    that:
+      - item.stat.exists | bool
+      - item.stat.isreg | bool
+    fail_msg: "Missing required PS5 SQLite dependency: {{ item.item }}"
+  loop: "{{ ps5mon_sqlite_files.results }}"
+  loop_control:
+    label: "{{ item.item }}"

@@ -1,0 +1,43 @@
+---
+- name: Recreate PS5 Monitor workspace
+  file:
+    path: "{{ ps5_monitor_host_workspace }}"
+    state: absent
+
+- name: Create PS5 Monitor workspace
+  file:
+    path: "{{ ps5_monitor_host_workspace }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy PS5 Monitor payload source into workspace
+  copy:
+    src: "{{ ps5_monitor_source_dir }}/"
+    dest: "{{ ps5_monitor_host_workspace }}/"
+    mode: preserve
+    directory_mode: "0755"
+
+- name: Verify monitor web sources are present
+  stat:
+    path: "{{ ps5_monitor_host_workspace }}/{{ item }}"
+  loop:
+    - main.c
+    - monitor_web.c
+    - monitor_web.h
+    - monitor_perf.c
+    - monitor_perf.h
+    - web/index.html
+    - web/app.css
+    - web/favicon.png
+    - tools/embed_web.py
+    - Makefile
+  register: ps5mon_required_sources
+
+- name: Validate monitor source copy
+  assert:
+    that:
+      - item.stat.exists | bool
+    fail_msg: "Missing PS5 Monitor source: {{ item.item }}"
+  loop: "{{ ps5mon_required_sources.results }}"
+  loop_control:
+    label: "{{ item.item }}"

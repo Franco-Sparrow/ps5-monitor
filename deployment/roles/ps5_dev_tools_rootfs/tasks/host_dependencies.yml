@@ -1,0 +1,6 @@
+---
+- name: Install packages required to create the PS5 development rootfs
+  apt:
+    name: "{{ ps5_dev_tools_host_packages }}"
+    state: present
+    update_cache: true

@@ -1,0 +1,56 @@
+---
+- name: Check PS5 development rootfs before optional recreation
+  stat:
+    path: "{{ ps5_dev_tools_rootfs }}"
+  register: ps5_rootfs_precleanup
+
+- name: Find mounts currently below PS5 development rootfs
+  command:
+    argv:
+      - findmnt
+      - --raw
+      - --noheadings
+      - --output
+      - TARGET
+  register: ps5_rootfs_mounts
+  changed_when: false
+  when:
+    - ps5_dev_tools_recreate_rootfs | bool
+    - ps5_rootfs_precleanup.stat.exists
+
+- name: Recursively unmount PS5 development rootfs before recreation
+  command:
+    argv:
+      - umount
+      - -R
+      - "{{ ps5_dev_tools_rootfs }}"
+  register: ps5_rootfs_unmount
+  changed_when: ps5_rootfs_unmount.rc == 0
+  failed_when:
+    - ps5_rootfs_unmount.rc != 0
+    - "'not mounted' not in ps5_rootfs_unmount.stderr | lower"
+  when:
+    - ps5_dev_tools_recreate_rootfs | bool
+    - ps5_rootfs_precleanup.stat.exists
+    - >-
+      ps5_rootfs_mounts.stdout_lines
+      | select('match', '^' ~ (ps5_dev_tools_rootfs | regex_escape) ~ '(/|$)')
+      | list
+      | length > 0
+
+- name: Remove only the PS5 development rootfs
+  file:
+    path: "{{ ps5_dev_tools_rootfs }}"
+    state: absent
+  when:
+    - ps5_dev_tools_recreate_rootfs | bool
+    - ps5_rootfs_precleanup.stat.exists
+
+- name: Report PS5 rootfs recreation request
+  debug:
+    msg:
+      - "PS5 development rootfs recreation requested."
+      - "Rootfs: {{ ps5_dev_tools_rootfs }}"
+      - "Workspace preserved: {{ ps5_dev_tools_workspace_dir }}"
+      - "Artifacts preserved: {{ ps5_dev_tools_artifacts_dir }}"
+  when: ps5_dev_tools_recreate_rootfs | bool

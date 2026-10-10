@@ -1,0 +1,40 @@
+---
+- name: Create persistent private PS5 project directory
+  file:
+    path: "{{ ps5_dev_tools_workspace_dir }}/{{ ps5_product_name }}"
+    state: directory
+    mode: "0755"
+
+- name: Create local project README
+  copy:
+    dest: "{{ ps5_dev_tools_workspace_dir }}/{{ ps5_product_name }}/README.local"
+    mode: "0644"
+    force: false
+    content: |
+      Private PS5 payload development workspace.
+
+      Product:
+        {{ ps5_product_name }}
+
+      Current project:
+        PS5 Monitor - web-first PS5 hardware and game monitor.
+
+      Developed by Sparrow.
+      Powered by AI.
+
+      Build environment:
+        - Ubuntu 24.04 rootfs
+        - PS5 Payload SDK {{ ps5_payload_sdk_version }}
+        - persistent source workspace mounted at /workspace
+        - build artifacts staged through /output
+
+- name: Create helper shell profile in private workspace
+  copy:
+    dest: "{{ ps5_dev_tools_workspace_dir }}/enter-env.sh"
+    mode: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      ROOTFS="{{ ps5_dev_tools_rootfs }}"
+      exec chroot "$ROOTFS" /bin/bash -l

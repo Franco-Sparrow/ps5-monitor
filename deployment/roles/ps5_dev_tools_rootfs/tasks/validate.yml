@@ -1,0 +1,20 @@
+---
+- name: Validate PS5 development rootfs settings
+  assert:
+    that:
+      - ps5_dev_tools_parent_dir == '/var/lib/ps5-dev-build'
+      - ps5_dev_tools_rootfs == ps5_dev_tools_parent_dir ~ '/ps5-dev-tools'
+      - ps5_dev_tools_workspace_dir == ps5_dev_tools_parent_dir ~ '/ps5-dev-tools-workspace'
+      - ps5_dev_tools_artifacts_dir == ps5_dev_tools_parent_dir ~ '/ps5-dev-tools-artifacts'
+      - ps5_dev_tools_rootfs != ps5_dev_tools_parent_dir
+      - ps5_dev_tools_workspace_dir != ps5_dev_tools_rootfs
+      - ps5_dev_tools_artifacts_dir != ps5_dev_tools_rootfs
+      - ps5_payload_sdk_version | length > 0
+      - ps5_payload_sdk_install_dir == '/opt/ps5-payload-sdk'
+      - ps5_product_name | length > 2
+      - ps5_product_name is match('^[a-z0-9][a-z0-9-]+$')
+      - ps5_product_workspace == '/workspace/' ~ ps5_product_name
+    fail_msg: >-
+      Invalid PS5 development environment configuration. Expected an isolated
+      build tree rooted at /var/lib/ps5-dev-build with the rootfs, workspace,
+      and artifact directories separated from each other.

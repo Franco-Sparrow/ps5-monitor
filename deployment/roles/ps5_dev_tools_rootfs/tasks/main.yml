@@ -1,0 +1,31 @@
+---
+# =============================================================================
+# PS5 DEV TOOLS ROOTFS
+# =============================================================================
+
+- name: Validate PS5 development configuration
+  import_tasks: validate.yml
+
+- name: Install PS5 development host dependencies
+  import_tasks: host_dependencies.yml
+
+- name: Recreate PS5 development rootfs when requested
+  import_tasks: recreate.yml
+
+- name: Prepare PS5 development rootfs
+  import_tasks: rootfs.yml
+
+- name: Configure PS5 development chroot runtime
+  import_tasks: chroot.yml
+
+- name: Install PS5 development toolchain
+  import_tasks: toolchain.yml
+
+- name: Install PS5 Payload SDK
+  import_tasks: sdk.yml
+
+- name: Prepare private PS5 project workspace
+  import_tasks: workspace.yml
+
+- name: Validate completed PS5 development environment
+  import_tasks: final_validation.yml
